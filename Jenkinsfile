@@ -50,7 +50,18 @@ pipeline {
             GIT_USER_NAME = "sidharth-420"
         }
         steps {
-            withCredentials([usernamePassword(credentialsId: 'github', usernameVariable: 'GIT_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+            withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+    sh '''
+        git config user.email "xyz@gmail.com"
+        git config user.name "${GIT_USER_NAME}"
+
+        sed -i "s|image: .*|image: shamnaddocker/static-website:${BUILD_NUMBER}|g" k8s/deployment.yml
+
+        git add k8s/deployment.yml
+        git commit -m "Update static site image tag to ${BUILD_NUMBER} [skip ci]" || echo "No changes to commit"
+        git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+    '''
+} {
                 sh '''
                     git config user.email "sidharthshai98@gmail.com"
                     git config user.name "${GIT_USER_NAME}"
